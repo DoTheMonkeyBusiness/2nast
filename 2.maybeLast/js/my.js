@@ -90,8 +90,10 @@ function appendStylesheet() {
 
     styleElement.rel = "stylesheet";
     styleElement.type = "text/css";
-    styleElement.href = '/css/' + getSrc()[7] + '.css';
+    styleElement.href = 'https://cdn.rawgit.com/DoTheMonkeyBusiness/2nast/ed3b47ec/2.maybeLast/css/' + getSrc()[7] + '.css';
     // document.head.appendChild(styleElement);
+    // 'https://github.com/DoTheMonkeyBusiness/2nast/blob/master/2.maybeLast/css/' + getSrc()[7] + '.css'
+    // https://github.com/DoTheMonkeyBusiness/2nast/blob/master/2.maybeLast/css/style1.css
 
     return styleElement;
 }
