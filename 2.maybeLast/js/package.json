@@ -1,0 +1,11 @@
+{
+  "scripts": {
+    "precommit": "lint-staged"
+  },
+  "lint-staged": {
+    "my.js": [
+      "prettier --single-quote --use-tabs --trailing-comma es5 --write",
+      "git add"
+    ]
+  }
+}
