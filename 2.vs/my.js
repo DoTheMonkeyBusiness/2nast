@@ -1,11 +1,24 @@
+var main = null;
+var chatName = null;
 var isChatHidden = false;
 var historyElement;
 var inputElement;
 var buttonElement;
 var textarea = null;
 var stateButton = null;
+var userName = null;
 var historyPanel = null;
 var mySrc = document.getElementsByTagName('script')[0].src;
+var tile = 'Chat';
+var botName = 'Bot';
+var chatUrl = 'https://firebase.com';
+var cssClass = 'main';
+var position = 'right';
+var allowMinimize = false;
+var allowDrag = false;
+var showDateTime = false;
+var requireName = false;
+var requests ='fetch';
 var options = {
     year: 'numeric',
     month: 'long',
@@ -14,15 +27,57 @@ var options = {
     minute: 'numeric',
 };
 
-
+// var config = {
+//     apiKey: "AIzaSyCcoZTWAbJGowNOKthfvZUxHzEG6PZu7Xc",
+//     authDomain: "chat-d4c14.firebaseapp.com",
+//     databaseURL: "https://chat-d4c14.firebaseio.com",
+//     projectId: "chat-d4c14",
+//     storageBucket: "",
+//     messagingSenderId: "712179949551"
+// };
+// firebase.initializeApp(config);
 
 var getSrc = function () {
 
     var pattern = /[%][2][7]/g;
     var res = mySrc.split(pattern);
-    return res;
+    tile = res[1];
+    botName = res[3];
+    chatUrl = res[5];
+    cssClass = res[7];
+    position = res[9];
+    if(res[11] === 'true')
+        allowMinimize = true;
+    else allowMinimize = false;
+    if(res[13] === 'true')
+        allowDrag = true;
+    else allowDrag = false;
+    if(res[15] === 'true')
+        showDateTime = true;
+    else showDateTime = false
+    if(res[17] === 'true')
+        requireName = true;
+    else requireName = false
+    requests = res[19];
 }
 
+
+function moveAt(e) {
+    main.style.left = e.pageX - chatName.offsetWidth / 2 + 'px';
+    main.style.top = e.pageY - chatName.offsetHeight / 2 + 'px';
+}
+
+function dragChat(e) {
+    moveAt(e);
+    document.addEventListener('mousemove', moveAt);
+
+    function finishDrag () {
+        document.removeEventListener('mousemove', moveAt);
+        document.removeEventListener('mouseup', finishDrag);
+    }
+
+    chatName.addEventListener('mouseup', finishDrag);
+}
 
 function appendStylesheet() {
     var styles = document.createElement("link");
@@ -36,9 +91,12 @@ function appendStylesheet() {
 
 
 function createChatName() {
-    var chatName = document.createElement('div');
+    chatName = document.createElement('div');
     chatName.classList.add('chatName');
-    chatName.innerHTML = getSrc()[1];
+    chatName.innerHTML = tile;
+
+    if(allowDrag)
+    chatName.addEventListener('mousedown', dragChat);
 
     return chatName;
 }
@@ -58,7 +116,9 @@ function Message(time, sender, body) {
     this.body = body;
 
     this.showMessage = function showMsg() {
+        if (showDateTime)
         return this.time.toLocaleString("en-US", options) + " " + this.sender + '<br>' + this.body + '<br>';
+        else return this.sender + '<br>' + this.body + '<br>';
     }
 }
 
@@ -81,7 +141,7 @@ function addMessage(text) {
 
 function addAnswer(text) {
     function createAnswer () {
-        var message = new Message(new Date(), getSrc()[3], 'The answer to the "' + text.toUpperCase() + '"');
+        var message = new Message(new Date(), botName, 'The answer to the "' + text.toUpperCase() + '"');
         historyPanel.innerHTML += '<br>' + message.showMessage();
         saveMessageToLocalStorage(message);
 
@@ -109,7 +169,7 @@ function createSendButton() {
 
 function getChatStatus() {
 
-    if(getSrc()[11] === 'true')
+    if(allowMinimize)
     return localStorage.getItem('isChatHidden');
     else return false;
 
@@ -144,7 +204,7 @@ function createStateButton() {
 
     initStateButton();
 
-    if(getSrc()[11] === 'true')
+    if(allowMinimize)
     stateButton.addEventListener('click', changeChatState);
 
     return stateButton;
@@ -160,9 +220,9 @@ function createHistory() {
 function positionChat() {
     var positionClass;
 
-    if (getSrc()[9] === "left") {
+    if (position === "left") {
         positionClass = "chatPosition-left";
-    } else if (getSrc()[9] === "right") {
+    } else if (position === "right") {
         positionClass = "chatPosition-right";
     }
 
@@ -170,16 +230,17 @@ function positionChat() {
 }
 
 function createChat () {
-    var main = document.createElement('div');
+    main = document.createElement('div');
     var history = createHistory();
     var textInput = createTextInput();
     var sendButton = createSendButton();
     main.id = 'chat';
-    main.classList.add(getSrc()[7]);
+    main.classList.add(cssClass);
 
     historyElement = history;
     inputElement = textInput;
     buttonElement = sendButton;
+
 
     main.classList.add(positionChat());
     main.appendChild(createChatName());
@@ -192,22 +253,9 @@ function createChat () {
 }
 
 function askUserName() {
-    createUserNamePromptMarkup();
-    setOtherComponentsAvailability(false);
-    document
-        .getElementById(PROMPT_CONFIRM_BUTTON_ID)
-        .addEventListener("click", function saveUserName() {
-            var userName = document.getElementById(PROMPT_INPUT_ID).value;
-            if (userName.length < 1){
-                return;
-            }
-            config.userName = userName;
-            document
-                .getElementById(CHAT_ITEM)
-                .removeChild(document.getElementById(USER_NAME_PROMPT_ID));
-            setOtherComponentsAvailability(true);
-            sendRequestToStorage(USER_NAME_FIELD, HTTP_PUT, config.userName);
-        });
+    userName = document.createElement("div");
+    userName.id = "userName";
+
 }
 
 function addHistoryToPage() {
@@ -227,6 +275,7 @@ function addHistoryToPage() {
     buttonElement.style.display = isChatHidden ? 'none' : 'block';
     initStateButton();
 }
+window.addEventListener('load', getSrc);
 window.addEventListener('load', appendStylesheet);
 window.addEventListener('load', createChat);
 window.addEventListener('load', addHistoryToPage);
